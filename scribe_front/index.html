@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        .card {
+            /* Add shadows to create the "card" effect */
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+            transition: 0.3s;
+        }
+
+        /* On mouse-over, add a deeper shadow */
+        .card:hover {
+            box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+        }
+
+        /* Add some padding inside the card container */
+        .container {
+            padding: 2px 16px;
+        }
+    </style>
+</head>
+<body>
+<h1 id="result"></h1>
+<a id="Sign_in" href="http://localhost:8080/sign_in?state=12345678">sign_in</a>
+<button id="clear_button" >clear session info</button>
+<div class="card" id="github_card">
+    <img id="avator" src="img_avatar.png" alt="Avatar" style="width:100%">
+    <div class="container">
+        <h4 id="name"></h4>
+    </div>
+</div>
+
+</body>
+<script lang="javascript">
+    const myStorage = localStorage;
+    const clear_button = document.getElementById('clear_button');
+    clear_button.onclick =(function(){
+        myStorage.clear()
+        location.href = "./"
+    });
+    const search = window.location.search;
+    const parseQueryString = function( queryString ) {
+        var params = {};
+        if(queryString.length > 1){
+            // Split into key/value pairs
+            var queries = queryString.substring(1).split('&');
+            queries.forEach(function(query){
+                var temp = query.split('=');
+                params[temp[0]] = temp[1];
+            });
+        }
+        return params;
+    };
+    const param = parseQueryString(search);
+    const code = param['code'];
+    const state = param['state'];
+    const url = "http://localhost:8080/token"
+    const check_url = "http://localhost:8080/isLogin"
+    const button = document.getElementById('Sign_in');
+    const card = document.getElementById('github_card');
+    const name = document.getElementById('name');
+    const avator = document.getElementById('avator');
+    card.style.display="none";
+    if(code && state && !myStorage.getItem("AccessToken")){
+        button.style.display="none";
+        const sendParam = {'code':code,'state':state}
+        fetch(url,{
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body:JSON.stringify(sendParam)
+        }).then(function(response) {
+            return response.json();
+        }).then(function(AccessToken){
+                console.log(AccessToken);
+                myStorage.setItem("AccessToken",JSON.stringify(AccessToken));
+                fetch(check_url,{
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body:JSON.stringify(AccessToken)
+                }).then(function(response) {
+                    return response.json();
+                }).then(function(result){
+                    card.style.display="block";
+                    var github_result = JSON.parse(result.body);
+                    name.innerText = github_result.login;
+                    avator.src = github_result.avatar_url;
+                    console.log(result);
+                    console.log(JSON.parse(result.body))
+                });
+        });
+    }else{
+        var AccessToken = myStorage.getItem("AccessToken")
+        if(AccessToken){
+            button.style.display="none";
+            fetch(check_url,{
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body:AccessToken
+            }).then(function(response) {
+                return response.json();
+            }).then(function(result){
+                card.style.display="block";
+                var github_result = JSON.parse(result.body);
+                name.innerText = github_result.login;
+                avator.src = github_result.avatar_url;
+                console.log(result);
+                console.log(JSON.parse(result.body))
+            });
+
+        }
+    }
+
+</script>
+</html>

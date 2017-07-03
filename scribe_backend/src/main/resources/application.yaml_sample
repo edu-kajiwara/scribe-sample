@@ -1,0 +1,13 @@
+github:
+  clientId:
+  clientSecret:
+
+spring:
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3307/modern_webpg?characterEncoding=utf8
+    username: root
+    password: verysecret
+    driver-class-name: com.mysql.jdbc.Driver
+
+client:
+  url: http://localhost:63342
